@@ -2,6 +2,8 @@
 #
 # This source code is licensed under the Apache License, Version 2.0
 # found in the LICENSE file in the root directory of this source tree.
+import sys
+sys.path.insert(0, '/home/nikola.jovisic.ivi/nj/dinov2')
 
 import argparse
 import logging
@@ -172,13 +174,13 @@ def do_train(cfg, model, resume=False):
         max_num_patches=0.5 * img_size // patch_size * img_size // patch_size,
     )
 
-    data_transform = DataAugmentationDINO(
-        cfg.crops.global_crops_scale,
-        cfg.crops.local_crops_scale,
-        cfg.crops.local_crops_number,
-        global_crops_size=cfg.crops.global_crops_size,
-        local_crops_size=cfg.crops.local_crops_size,
-    )
+#     data_transform = DataAugmentationDINO(
+#         cfg.crops.global_crops_scale,
+#         cfg.crops.local_crops_scale,
+#         cfg.crops.local_crops_number,
+#         global_crops_size=cfg.crops.global_crops_size,
+#         local_crops_size=cfg.crops.local_crops_size,
+#     )
 
     collate_fn = partial(
         collate_data_and_cast,
@@ -191,11 +193,19 @@ def do_train(cfg, model, resume=False):
 
     # setup data loader
 
-    dataset = make_dataset(
-        dataset_str=cfg.train.dataset_path,
-        transform=data_transform,
-        target_transform=lambda _: (),
-    )
+#     dataset = make_dataset(
+#         dataset_str=cfg.train.dataset_path,
+#         transform=data_transform,
+#         target_transform=lambda _: (),
+#     )
+    
+    from dinov2.data.embed_dataset import EmbedDataset
+    
+    csv_path = '/home/nikola.jovisic.ivi/nj/embed/train.csv'
+    root = '/data'
+    
+    dataset = EmbedDataset(csv_path, root)
+    
     # sampler_type = SamplerType.INFINITE
     sampler_type = SamplerType.SHARDED_INFINITE
     data_loader = make_data_loader(
@@ -316,3 +326,4 @@ def main(args):
 if __name__ == "__main__":
     args = get_args_parser(add_help=True).parse_args()
     main(args)
+
