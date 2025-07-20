@@ -4,6 +4,8 @@
 # found in the LICENSE file in the root directory of this source tree.
 import sys
 sys.path.insert(0, '/home/nikola.jovisic.ivi/nj/dinov2')
+from datasets_shim import *
+from mammo_datasets.datasets.embed import EMBEDSpecifics
 
 import argparse
 import logging
@@ -23,6 +25,7 @@ from dinov2.utils.config import setup
 from dinov2.utils.utils import CosineScheduler
 
 from dinov2.train.ssl_meta_arch import SSLMetaArch
+
 
 
 torch.backends.cuda.matmul.allow_tf32 = True  # PyTorch 1.12 sets this to False by default
@@ -198,13 +201,18 @@ def do_train(cfg, model, resume=False):
 #         transform=data_transform,
 #         target_transform=lambda _: (),
 #     )
-    
-    from dinov2.data.embed_dataset import EmbedDataset
-    
-    csv_path = '/home/nikola.jovisic.ivi/nj/embed/train.csv'
-    root = '/data'
-    
-    dataset = EmbedDataset(csv_path, root)
+
+
+    transform = DataAugmentationDINO(global_crops_scale=(0.5, 1.0), 
+                                     local_crops_scale=(0.01, 0.35), 
+                                     local_crops_number=8,
+                                     normalization=EMBEDSpecifics().normalization_stats)
+
+    dataset = UnifiedDataset([MammoDataset(transform=transform, split='train'), 
+                         MammoDataset(transform=transform, split='valid'), 
+                         MammoDataset(transform=transform, split='train', labels=[3, 4, 5, 6]), 
+                         MammoDataset(transform=transform, split='valid', labels=[3, 4, 5, 6])],
+                         cycles=[1, 1, 4, 4])
     
     # sampler_type = SamplerType.INFINITE
     sampler_type = SamplerType.SHARDED_INFINITE

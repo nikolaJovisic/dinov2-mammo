@@ -6,13 +6,14 @@ def extract_backbone(input_path, output_path, use_teacher=False):
     ckpt = torch.load(input_path, map_location='cpu', weights_only=False)
     model_dict = ckpt["model"]
 
-    prefix = "teacher.backbone." if use_teacher else "student.backbone."
+    prefix = "teacher.backbone." if use_teacher else "student.backbone." #for ddp use student.backbone.module.
     new_state_dict = OrderedDict()
 
     for k, v in model_dict.items():
+        if k.startswith("module."):
+            k = k[len("module."):]
         if k.startswith(prefix):
-            new_key = k[len(prefix):]
-            new_state_dict[new_key] = v
+            new_state_dict[k[len(prefix):]] = v
 
     torch.save(new_state_dict, output_path)
     print(f"Extracted {'teacher' if use_teacher else 'student'} backbone saved to {output_path}")

@@ -18,15 +18,17 @@ from dinov2.configs import dinov2_default_config
 logger = logging.getLogger("dinov2")
 
 
-def apply_scaling_rules_to_cfg(cfg):  # to fix
+def apply_scaling_rules_to_cfg(cfg):
     if cfg.optim.scaling_rule == "sqrt_wrt_1024":
         base_lr = cfg.optim.base_lr
-        cfg.optim.lr = base_lr
-        cfg.optim.lr *= math.sqrt(cfg.train.batch_size_per_gpu * distributed.get_global_size() / 1024.0)
+        cfg.optim.lr = base_lr * math.sqrt(cfg.train.batch_size_per_gpu * distributed.get_global_size() / 1024.0)
         logger.info(f"sqrt scaling learning rate; base: {base_lr}, new: {cfg.optim.lr}")
+    elif cfg.optim.scaling_rule == "none":
+        logger.info(f"no scaling applied to learning rate; using base: {cfg.optim.lr}")
     else:
-        raise NotImplementedError
+        raise NotImplementedError(f"Unknown scaling rule: {cfg.optim.scaling_rule}")
     return cfg
+
 
 
 def write_config(cfg, output_dir, name="config.yaml"):
