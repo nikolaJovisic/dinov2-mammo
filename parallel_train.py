@@ -3,11 +3,17 @@ import os
 import yaml
 import tempfile
 from pathlib import Path
+import torch
+
+
+available_gpus = list(range(torch.cuda.device_count()))
 
 base_config_path = "dinov2/configs/train/mammo-config.yaml"
 base_output_root = "outputs"
-learning_rates = [2e-4, 2e-6]
-available_gpus = [0, 1]  # map to CUDA_VISIBLE_DEVICES
+learning_rates = [2e-4, 2e-5, 2e-6]
+
+if len(available_gpus) != len(learning_rates):
+    raise ValueError('Grid search / GPU mismatch!')
 
 processes = []
 
